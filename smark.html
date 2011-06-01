@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+
+<title>Smark</title>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://cufon.shoqolate.com/js/cufon-yui.js?v=1.09i"></script>
+<script type="text/javascript" src="TitilliumText22L_Th_100-TitilliumText22L_Lt_500.font.js"></script>
+
+<style>
+body {
+    background: #000;
+    color: #9ba09d;
+    font-size: 30px;
+    line-height: 300%;
+}
+h1,h2{
+    width: 800px;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border:0;
+    padding:0;
+}
+
+i {
+
+
+}
+
+</style>
+
+<script>
+$(function(){
+    Cufon.replace('h1');
+    Cufon.replace('h2',{fontFamily:"TitilliumText22L Th"}); 
+    var $slide = $("h1,h2");
+    $slide.css("margin-top", "-"+$slide.height()/2 + "px");
+    $slide.css("margin-left", "-"+$slide.width()/2 + "px");
+
+
+    var scolor = (function(){
+        var scolor = {
+            "r": 229,
+            "g": 73,
+            "b": 100
+        },
+        color = {
+            "r": scolor["r"],
+            "g": scolor["g"],
+            "b": scolor["b"]
+        }
+
+
+        var currColor = "b";
+
+        function nextColor() {
+            if(color[currColor] == scolor["b"] || color[currColor] == scolor["g"])
+                color[currColor] = scolor["r"];
+            else
+                color[currColor] = scolor["g"];
+
+            // set currColor for next iteration
+            if(currColor == "r")
+                currColor = "g";
+            else if(currColor == "g")
+                currColor = "b";
+            else if(currColor == "b")
+                currColor = "r";
+
+        }
+
+        function random(){
+            var rand = Math.floor(Math.random()*51);
+            for(var i=0; i<rand; i++) {
+                nextColor();
+            }
+
+            return color;
+        }
+        return {
+            random: random
+        };
+    })();
+
+    $("h1, i").each(function(){
+        var color = scolor.random();
+        $(this).css("color", "rgb("+color["r"]+","+color["g"]+","+color["b"]+")");    
+
+    });
+
+});
+
+</script>
+
+
+</head>
+<body>
+<div id="slide">
+<!--
+<h1>
+    Culture
+</h1>
+-->
+<h2>
+    Beautiful <i>slides</i> directly with <i>Markdown</i>
+</h2>
+<!--
+<h1>Background</h1>
+</div>
+-->
+
+</body>
+</html>
