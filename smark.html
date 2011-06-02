@@ -88,7 +88,8 @@ $(function(){
     */
     var align = function(el) {
         if(!el) {
-            el = $("#slide").find("div.slide");
+            // the one with opacity 0
+            el = $(".current").get(0);
         }
         var $slide = $(el);
         $slide.css("margin-top", "-"+$slide.height()/2 + "px");
@@ -181,16 +182,22 @@ $(function(){
         });
         var nav = (function(){
             var currHeader = 0,
+                currClass = "current",
                 fading = false;
             function next() {
                 if(fading) return;
                 fading = true;
-                $(slides[currHeader]).animate({opacity:0.0}, 500, function() {
+                var $currSlide = $(slides[currHeader]);
+                $currSlide.removeClass(currClass);
+                $currSlide.animate({opacity:0.0}, 500, function() {
                     currHeader++;
                     if(!slides[currHeader])
                         currHeader--;
 
-                    $(slides[currHeader]).animate({opacity:1.0}, 500, function() {
+                    $currSlide = $(slides[currHeader]);
+
+                    $currSlide.animate({opacity:1.0}, 500, function() {
+                        $currSlide.addClass(currClass);
                         align(slides[currHeader]);
                         fading = false;
                     });
@@ -200,13 +207,18 @@ $(function(){
             }
             function prev() {
                 if(fading) return;
-                $(slides[currHeader]).css("opacity", "0"); // hide the one before
+                var $currSlide = $(slides[currHeader]);
+                $currSlide.removeClass(currClass);
+                $currSlide.css("opacity", "0"); // hide the one before
 
                 currHeader--;
                 if(!slides[currHeader])
                     currHeader++;
 
-                $(slides[currHeader]).css("opacity", "1");
+                $currSlide = $(slides[currHeader]);
+
+                $currSlide.css("opacity", "1");
+                $currSlide.addClass(currClass);
                 align(slides[currHeader]);
             }
 
