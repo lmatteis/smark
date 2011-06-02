@@ -5,7 +5,8 @@
 <title>Smark</title>
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
-<link href='http://fonts.googleapis.com/css?family=Wire+One' rel='stylesheet' type='text/css'>
+<script type="text/javascript" src="showdown.js"></script>
+<link href='http://fonts.googleapis.com/css?family=Francois+One' rel='stylesheet' type='text/css'>
 
 
 <style>
@@ -26,11 +27,10 @@ body {
     background: #000;
     color: #9ba09d;
     font-size: 50px;
-    font-family: 'Wire One';
+    font-family: 'Francois One';
 }
-h1,h2{
-    width: 800px;
-    text-align: center;
+div.slide{
+    width: 70%;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -38,9 +38,26 @@ h1,h2{
     padding:0;
 }
 
-i {
+h1, h2 {
+    text-align: center;
+}
+em {
     font-style: normal;
-
+}
+#edit {
+    position: absolute;
+    top:0;
+    right:0;
+}
+#edit textarea{
+    width: 400px;
+    margin: 10px;
+    padding: 5px;
+    height: 400px;
+    display: block;
+}
+#edit button{
+    display: block;
 }
 </style>
 
@@ -50,10 +67,22 @@ $(function(){
     Cufon.replace('h1');
     Cufon.replace('h2',{fontFamily:"TitilliumText22L Th"}); 
     */
-    var $slide = $("h1,h2");
-    $slide.css("margin-top", "-"+$slide.height()/2 + "px");
-    $slide.css("margin-left", "-"+$slide.width()/2 + "px");
+    var align = function(el) {
+        if(!el) {
+            el = $("#slide").find("div.slide:visible").get(0);
+        }
+        var $slide = $(el);
+        $slide.css("margin-top", "-"+$slide.height()/2 + "px");
+        $slide.css("margin-left", "-"+$slide.width()/2 + "px");
+        // font size should be proportional to screen size
+        //Standard height, for which the body font size is correct
+        var preferredHeight = 768;  
 
+        var displayHeight = $(window).height();
+        var percentage = displayHeight / preferredHeight;
+        var newFontSize = Math.floor(70 * percentage) - 1;
+        $("body").css("font-size", newFontSize);
+    };
 
     var scolor = (function(){
         var scolor = {
@@ -66,8 +95,6 @@ $(function(){
             "g": scolor["g"],
             "b": scolor["b"]
         }
-
-
         var currColor = "b";
 
         function nextColor() {
@@ -99,75 +126,105 @@ $(function(){
         };
     })();
 
-    $("h1, i").each(function(){
-        var color = scolor.random();
-        $(this).css("color", "rgb("+color["r"]+","+color["g"]+","+color["b"]+")");    
+    function makeSlide() {
+        $("h1, em").each(function(){
+            var color = scolor.random();
+            $(this).css("color", "rgb("+color["r"]+","+color["g"]+","+color["b"]+")");    
 
-    });
+        });
 
-    // go through all slides and split them
-    var slides = [],
-        headers = ["h1", "h2"],
-        slide;
-    var $slide = $("#slide");
-    $slide.children().each(function() {
-        var nodeName = this.nodeName.toLowerCase().trim();
-        if($.inArray(nodeName, headers) > -1) { // it's a header
-            slide = $("<div></div>");
-            slide.hide();
-            slides.push(slide.get(0));
-        } 
-        slide.append($(this).clone());
-    });
-    $slide.html(""); // clear it out
+        // go through all slides and split them
+        var slides = [],
+            headers = ["h1", "h2"],
+            slide;
+        var $slide = $("#slide");
+        $slide.children().each(function() {
+            var nodeName = this.nodeName.toLowerCase().trim();
+            if($.inArray(nodeName, headers) > -1) { // it's a header
+                slide = $("<div class='slide'></div>");
+                slides.push(slide.get(0));
+            } 
+            slide.append($(this).clone());
+        });
+        $slide.html(""); // clear it out
 
-    // add the slides to document
-    $.each(slides, function(i) {
-        if(i == 0) $(this).show(); // show first
-        $slide.append(this);
-    });
+        // add the slides to document
+        $.each(slides, function(i) {
+            $slide.append(this);
+            var $this = $(this);
+            if(i == 0) {
+                $this.show(); // show first
+                align(this);
+            } else {
+                $this.hide();
+            }
+        });
+        var nav = (function(){
+            var currHeader = 0;
+            function next() {
+                $(slides[currHeader]).hide(); // hide the one before
 
-    var nav = (function(){
-        var currHeader = 0;
-        function next() {
-            $(slides[currHeader]).hide(); // hide the one before
-
-            currHeader++;
-            if(!slides[currHeader])
-                currHeader--;
-
-            $(slides[currHeader]).show();
-        }
-        function prev() {
-            $(slides[currHeader]).hide(); // hide the one before
-
-            currHeader--;
-            if(!slides[currHeader])
                 currHeader++;
+                if(!slides[currHeader])
+                    currHeader--;
 
-            $(slides[currHeader]).show();
-        }
+                $(slides[currHeader]).show();
+                align(slides[currHeader]);
+            }
+            function prev() {
+                $(slides[currHeader]).hide(); // hide the one before
 
-        return {
-            next: next,
-            prev: prev
-        };
-    })();
+                currHeader--;
+                if(!slides[currHeader])
+                    currHeader++;
 
-    // when clicking the document go through header
-    $(document).click(function(e){
-        nav.next();
+                $(slides[currHeader]).show();
+                align(slides[currHeader]);
+            }
 
-        e.stopPropagation();
-        e.preventDefault();
-    });
-    $(document).keydown(function(e){
-        if(e.keyCode == 37) { //left
-            nav.prev();
-        } else if(e.keyCode == 39) { // right
+            return {
+                next: next,
+                prev: prev
+            };
+        })();
+
+        var $document = $(document);
+        // unbind all events
+        $document.die();
+
+        // when clicking the document go through header
+        $document.click(function(e){
             nav.next();
-        }
+
+            e.stopPropagation();
+            e.preventDefault();
+        });
+        $document.keydown(function(e){
+            if(e.keyCode == 37) { //left
+                nav.prev();
+            } else if(e.keyCode == 39) { // right
+                nav.next();
+            }
+        });
+
+        var $window = $(window);
+        $window.die();
+        $window.resize(function() {
+            align();
+        });
+    }
+
+    makeSlide();
+
+    var $edit = $("#edit");
+    $edit.find("button").click(function(){
+        var converter = new Showdown.converter();
+        var html = converter.makeHtml($("#md").val());
+
+        $("#slide").html(html);
+        makeSlide();
     });
+    
 });
 
 </script>
@@ -175,19 +232,11 @@ $(function(){
 
 </head>
 <body>
-<div id="slide">
-<h1>
-    Culture
-</h1>
-<h2>
-    Create beautiful <i>slides</i> directly with <i>Markdown</i>
-</h2>
-<h1>Background</h1>
-<ul>
-<li>You are god
-<li>Flabbel
-</ul>
-</div>
-
+    <div id="edit">
+        <textarea id="md"></textarea>
+        <button>Generate slide!</button>
+    </div>
+    <div id="slide">
+    </div>
 </body>
 </html>
