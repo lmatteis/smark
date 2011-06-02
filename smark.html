@@ -36,9 +36,10 @@ div.slide{
     left: 50%;
     border:0;
     padding:0;
+    z-index:-1;
 }
 
-h1, h2 {
+h1, h2, h3, h4 {
     text-align: center;
 }
 em {
@@ -48,6 +49,7 @@ em {
     position: absolute;
     top:0;
     right:0;
+    z-index: 1;
 }
 #edit textarea{
     width: 400px;
@@ -58,6 +60,23 @@ em {
 }
 #edit button{
     display: block;
+    width: 100px;
+    margin: auto;
+}
+a {
+    text-decoration: none;
+}
+
+pre {
+    padding: 10px;
+}
+pre, code, tt {
+    font: 0.4em 'andale mono', 'lucida console', monospace;
+    line-height: 1.5;
+}
+
+code {
+
 }
 </style>
 
@@ -69,7 +88,7 @@ $(function(){
     */
     var align = function(el) {
         if(!el) {
-            el = $("#slide").find("div.slide:visible").get(0);
+            el = $("#slide").find("div.slide");
         }
         var $slide = $(el);
         $slide.css("margin-top", "-"+$slide.height()/2 + "px");
@@ -127,7 +146,7 @@ $(function(){
     })();
 
     function makeSlide() {
-        $("h1, em").each(function(){
+        $("h1, em, a").each(function(){
             var color = scolor.random();
             $(this).css("color", "rgb("+color["r"]+","+color["g"]+","+color["b"]+")");    
 
@@ -135,7 +154,7 @@ $(function(){
 
         // go through all slides and split them
         var slides = [],
-            headers = ["h1", "h2"],
+            headers = ["h1", "h2", "h3", "h4"],
             slide;
         var $slide = $("#slide");
         $slide.children().each(function() {
@@ -154,32 +173,40 @@ $(function(){
             $slide.append(this);
             var $this = $(this);
             if(i == 0) {
-                $this.show(); // show first
-                align(this);
+                $this.css("opacity", "1"); // show first
             } else {
-                $this.hide();
+                $this.css("opacity", "0");
             }
+            align(this);
         });
         var nav = (function(){
-            var currHeader = 0;
+            var currHeader = 0,
+                fading = false;
             function next() {
-                $(slides[currHeader]).hide(); // hide the one before
+                if(fading) return;
+                fading = true;
+                $(slides[currHeader]).animate({opacity:0.0}, 500, function() {
+                    currHeader++;
+                    if(!slides[currHeader])
+                        currHeader--;
 
-                currHeader++;
-                if(!slides[currHeader])
-                    currHeader--;
+                    $(slides[currHeader]).animate({opacity:1.0}, 500, function() {
+                        align(slides[currHeader]);
+                        fading = false;
+                    });
+                 
+                }); // hide the one before
 
-                $(slides[currHeader]).show();
-                align(slides[currHeader]);
             }
             function prev() {
-                $(slides[currHeader]).hide(); // hide the one before
+                if(fading) return;
+                $(slides[currHeader]).css("opacity", "0"); // hide the one before
 
                 currHeader--;
                 if(!slides[currHeader])
                     currHeader++;
 
-                $(slides[currHeader]).show();
+                $(slides[currHeader]).css("opacity", "1");
                 align(slides[currHeader]);
             }
 
