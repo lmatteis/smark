@@ -148,6 +148,7 @@ $(function(){
         });
         $slide.html(""); // clear it out
 
+
         // add the slides to document
         $.each(slides, function(i) {
             $slide.append(this);
@@ -217,6 +218,11 @@ $(function(){
     makeSlide();
 
     var $edit = $("#edit");
+    $edit.children().each(function(){
+        $(this).click(function(e) {
+            e.stopPropagation();
+        });
+    });
     $edit.find("button").click(function(){
         var converter = new Showdown.converter();
         var html = converter.makeHtml($("#md").val());
