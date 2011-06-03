@@ -50,18 +50,31 @@ em {
     top:0;
     right:0;
     z-index: 1;
+    text-align: center;
 }
 #edit textarea{
     width: 400px;
+    margin:0;
+    padding:0;
     margin: 10px;
     padding: 5px;
     height: 400px;
     display: block;
 }
+div.buttons {
+     
+}
 #edit button{
+    margin:auto;
     display: block;
     width: 100px;
-    margin: auto;
+}
+.show {
+    font-family: Courier;
+    font-size: 12px;
+    cursor: pointer;
+    height: 40px;
+
 }
 a {
     text-decoration: none;
@@ -179,34 +192,60 @@ $(function(){
                 $this.css("opacity", "0");
             }
             align(this);
+
+            // hide all the ol>li and ul>li with opacity:0
+            // so that formatting is preserved
+            // add the inner elements found that need to be shown directly on the array as a property
+            this.innerSlides = $this.children("ol, ul").find("li").css("opacity", "0");
         });
         var nav = (function(){
             var currHeader = 0,
+                innerIdx = 0,
                 currClass = "current",
                 fading = false;
             function next() {
                 if(fading) return;
+                if(!slides[currHeader]) return;
                 fading = true;
-                var $currSlide = $(slides[currHeader]);
-                $currSlide.removeClass(currClass);
-                $currSlide.animate({opacity:0.0}, 500, function() {
-                    currHeader++;
-                    if(!slides[currHeader])
-                        currHeader--;
-
-                    $currSlide = $(slides[currHeader]);
-
-                    $currSlide.animate({opacity:1.0}, 500, function() {
-                        $currSlide.addClass(currClass);
-                        align(slides[currHeader]);
+                // check if the current slide we are on has innerslides
+                // and that there's a slide to show
+                if(slides[currHeader].innerSlides.length &&
+                    slides[currHeader].innerSlides[innerIdx]) {
+                    // check which innerslide idx we need to show
+                    var $currInnerSlide = $(slides[currHeader].innerSlides[innerIdx]);
+                    $currInnerSlide.animate({opacity:1.0}, 500, function() {
+                        innerIdx++;
                         fading = false;
                     });
-                 
-                }); // hide the one before
+
+                } else { // otherwise proceed with header sliding
+                    innerIdx = 0;
+                    if(!slides[currHeader + 1]) {
+                        fading = false;
+                        return;
+                    }
+                    var $currSlide = $(slides[currHeader]);
+                    $currSlide.removeClass(currClass);
+                    $currSlide.animate({opacity:0.0}, 500, function() {
+                        align(slides[currHeader]);
+                        currHeader++;
+                        if(!slides[currHeader])
+                            currHeader--;
+
+                        $currSlide = $(slides[currHeader]);
+
+                        $currSlide.animate({opacity:1.0}, 500, function() {
+                            $currSlide.addClass(currClass);
+                            fading = false;
+                        });
+                     
+                    }); // hide the one before
+                }
 
             }
             function prev() {
                 if(fading) return;
+                if(!slides[currHeader - 1]) return;
                 var $currSlide = $(slides[currHeader]);
                 $currSlide.removeClass(currClass);
                 $currSlide.css("opacity", "0"); // hide the one before
@@ -230,7 +269,8 @@ $(function(){
 
         var $document = $(document);
         // unbind all events
-        $document.die();
+        $document.unbind("click");
+        $document.unbind("keydown");
 
         // when clicking the document go through header
         $document.click(function(e){
@@ -248,10 +288,11 @@ $(function(){
         });
 
         var $window = $(window);
-        $window.die();
+        $window.unbind("resize");
         $window.resize(function() {
             align();
         });
+
     }
 
     makeSlide();
@@ -262,14 +303,20 @@ $(function(){
             e.stopPropagation();
         });
     });
-    $edit.find("button").click(function(){
+    $edit.find("button.generate").click(function(){
         var converter = new Showdown.converter();
         var html = converter.makeHtml($("#md").val());
 
         $("#slide").html(html);
         makeSlide();
     });
-    
+    $("button.hide").click(function() {
+        $("#edit").hide();
+    });
+    $(".show").click(function() {
+        $("#edit").show();
+    });
+
 });
 
 </script>
@@ -277,9 +324,13 @@ $(function(){
 
 </head>
 <body>
+    <div class="show"></div>
     <div id="edit">
         <textarea id="md"></textarea>
-        <button>Generate slide!</button>
+        <div class="buttons">
+            <button class="generate">Generate slide!</button>
+            <button class="hide">Hide</button>
+        </div>
     </div>
     <div id="slide">
     </div>
